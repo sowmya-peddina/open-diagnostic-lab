@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lab}
+      POSTGRES_DB: ${POSTGRES_DB:-diagnostic_lab}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lab} -d ${POSTGRES_DB:-diagnostic_lab}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published to host by default — only reachable on the Compose network
+    networks:
+      - labnet
+
+  api:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-lab}:${POSTGRES_PASSWORD:-lab}@db:5432/${POSTGRES_DB:-diagnostic_lab}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production-use-long-random-string}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      CLINIC_NAME: ${CLINIC_NAME:-Open Diagnostic Lab}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - labnet
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: /api
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    networks:
+      - labnet
+
+volumes:
+  pgdata:
+
+networks:
+  labnet:
+    driver: bridge

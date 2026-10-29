@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Report {{ order.order_number }}</title>
+  <style>
+    @page { size: A4; margin: 18mm 14mm; }
+    body { font-family: DejaVu Sans, Arial, Helvetica, sans-serif; font-size: 11pt; color: #111; }
+    .header { border-bottom: 2px solid #1a4f7a; padding-bottom: 10px; margin-bottom: 16px; }
+    .clinic-name { font-size: 20pt; font-weight: bold; color: #1a4f7a; margin: 0; }
+    .clinic-meta { font-size: 9pt; color: #444; margin-top: 4px; }
+    .meta-grid { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    .meta-grid td { padding: 4px 6px; vertical-align: top; }
+    .label { color: #555; font-size: 9pt; }
+    .section { margin-top: 16px; page-break-inside: avoid; }
+    .section h2 { font-size: 12pt; margin: 0 0 6px; color: #1a4f7a; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    table.results { width: 100%; border-collapse: collapse; }
+    table.results th, table.results td { border: 1px solid #ccc; padding: 5px 6px; text-align: left; }
+    table.results th { background: #eef4f8; font-size: 9pt; }
+    .flag { font-weight: bold; color: #b00020; }
+    .footer { margin-top: 28px; border-top: 1px solid #ccc; padding-top: 8px; font-size: 9pt; color: #555; }
+    .sign { margin-top: 36px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <p class="clinic-name">{{ clinic.clinic_name }}</p>
+    <div class="clinic-meta">
+      {% if clinic.address %}{{ clinic.address }}<br/>{% endif %}
+      {% if clinic.phone %}Phone: {{ clinic.phone }}{% endif %}
+    </div>
+  </div>
+
+  <table class="meta-grid">
+    <tr>
+      <td><div class="label">Patient</div><strong>{{ patient.full_name if patient else '—' }}</strong></td>
+      <td><div class="label">Patient ID</div>{{ patient.patient_code if patient else '—' }}</td>
+      <td><div class="label">Age / Sex</div>{{ age or '—' }} / {{ patient.sex.value if patient else '—' }}</td>
+    </tr>
+    <tr>
+      <td><div class="label">Order No.</div>{{ order.order_number }}</td>
+      <td><div class="label">Ordered</div>{{ order.ordered_at.strftime('%Y-%m-%d %H:%M') if order.ordered_at else '—' }}</td>
+      <td><div class="label">Referring Doctor</div>{{ doctor.full_name if doctor else '—' }}</td>
+    </tr>
+  </table>
+
+  {% for section in sections %}
+  <div class="section">
+    <h2>{{ section.test_name }}{% if section.sample_type %} <small>({{ section.sample_type }})</small>{% endif %}</h2>
+    <table class="results">
+      <thead>
+        <tr>
+          <th>Investigation</th>
+          <th>Result</th>
+          <th>Unit</th>
+          <th>Reference</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in section.rows %}
+        <tr>
+          <td>{{ row.name }}</td>
+          <td>{{ row.value }}</td>
+          <td>{{ row.unit }}</td>
+          <td>{{ row.reference }}</td>
+          <td class="flag">{{ row.flag }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+
+  <div class="sign">
+    <div>________________________</div>
+    <div>Authorized Signatory</div>
+  </div>
+
+  <div class="footer">{{ clinic.footer }}</div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Example TLS reverse proxy in front of the Compose `web` service.
+# Point DNS to this host, then run Caddy with this file.
+#
+# Replace lab.example.clinic with your hostname.
+
+lab.example.clinic {
+    reverse_proxy localhost:8080
+}
